@@ -1,0 +1,55 @@
+name: Terraform Check (pull request)
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write 
+  contents: read
+  pull-requests: write 
+
+env:
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - stack: network
+            path: environments/dev/network
+            region: ap-southeast-1
+          - stack: compute
+            path: environments/dev/compute
+            region: ap-southeast-1
+          - stack: edge
+            path: environments/dev/edge
+            region: us-east-1
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEMO_ROLE_ARN }}
+          aws-region: ${{ matrix.region }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform fmt
+        run: terraform fmt --recursive
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Fail if plan errored
+        if: steps.plan.outcome == 'failure'
+        run: exit 1

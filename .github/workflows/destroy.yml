@@ -1,0 +1,110 @@
+name: Terraform Destroy (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy" to confirm — this deletes ALL infrastructure'
+        required: true
+        type: string
+
+permissions:
+  id-token: write   # required for OIDC role assumption
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  # =====================================================================
+  # Guard — the whole workflow stops here unless "destroy" was typed
+  # exactly, so a misclick on "Run workflow" can't destroy anything.
+  # =====================================================================
+  check-confirmation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify confirmation input
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
+            echo "Confirmation text did not match 'destroy'. Aborting."
+            exit 1
+          fi
+          echo "Confirmed — proceeding with destroy."
+
+  # =====================================================================
+  # 1. EDGE — destroy first (CloudFront/WAF depend on the ALB)
+  # =====================================================================
+  edge-destroy:
+    needs: check-confirmation
+    runs-on: ubuntu-latest
+    environment: demo   # add required reviewers under Settings > Environments for a manual gate, if wanted
+    defaults:
+      run:
+        working-directory: environments/dev/edge
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEMO_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform destroy
+        run: terraform destroy -input=false -auto-approve
+
+  # =====================================================================
+  # 2. COMPUTE — destroy after edge (ASG/ALB depend on the VPC/subnets)
+  # =====================================================================
+  compute-destroy:
+    needs: edge-destroy
+    runs-on: ubuntu-latest
+    environment: demo
+    defaults:
+      run:
+        working-directory: environments/dev/compute
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEMO_ROLE_ARN }}
+          aws-region: ap-southeast-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform destroy
+        run: terraform destroy -input=false -auto-approve
+
+  # =====================================================================
+  # 3. NETWORK — destroy last 
+  # =====================================================================
+  network-destroy:
+    needs: compute-destroy
+    runs-on: ubuntu-latest
+    environment: demo
+    defaults:
+      run:
+        working-directory: environments/dev/network
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEMO_ROLE_ARN }}
+          aws-region: ap-southeast-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform destroy
+        run: terraform destroy -input=false -auto-approve
