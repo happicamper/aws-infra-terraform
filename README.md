@@ -1,4 +1,5 @@
-<img width="1562" height="852" alt="VPC_CRESCENDO" src="https://github.com/user-attachments/assets/1813dc5f-c698-44e0-ad38-fef898625e38" />
+<img width="1562" height="852" alt="aws_infra_archi" src="https://github.com/user-attachments/assets/86ae43df-4bf3-44af-ad1b-bbf0e8bdd8f8" />
+
 
 # AWS Infrastructure
 
