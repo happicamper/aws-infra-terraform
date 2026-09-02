@@ -26,3 +26,8 @@ data "aws_subnets" "private" {
     Subnet = "private"
   }
 }
+
+# data source of CloudFront that will be used for ALB Security group
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
