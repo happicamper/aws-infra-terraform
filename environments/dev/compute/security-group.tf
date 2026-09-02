@@ -1,4 +1,5 @@
 locals {
+  # security group that will be assigned to ASG that will only listen from ALB
   security_groups = {
     for sg_key, sg in var.security_groups : sg_key => merge(sg, {
       ingress_rules = {

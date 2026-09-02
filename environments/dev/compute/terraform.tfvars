@@ -66,22 +66,7 @@ albs = {
     load_balancer_type = "application"
     subnets            = []
     # ALB security group upon creation
-    security_group_ingress_rules = {
-      all_http = {
-        from_port   = 80
-        to_port     = 80
-        ip_protocol = "tcp"
-        description = "HTTP web traffic"
-        cidr_ipv4   = "0.0.0.0/0"
-      }
-      all_https = {
-        from_port   = 443
-        to_port     = 443
-        ip_protocol = "tcp"
-        description = "HTTPS web traffic"
-        cidr_ipv4   = "0.0.0.0/0"
-      }
-    }
+    security_group_ingress_rules = {} #ingress rules are stated in security-group.tf for ALB to be able to listen from CloudFront ONLY
     security_group_egress_rules = {
       all = {
         ip_protocol = "-1"
@@ -90,7 +75,7 @@ albs = {
     }
 
     listeners = {
-      http-test = {
+      http = {
         port     = 80
         protocol = "HTTP"
         forward = {
@@ -130,7 +115,7 @@ albs = {
 ################################################################################
 
 aws_region   = "ap-southeast-1"
-project_name = "crescendo-exam"
+project_name = "project-exam"
 environment  = "dev"
 
 # --- Networking ---
