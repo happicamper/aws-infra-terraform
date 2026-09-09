@@ -115,7 +115,7 @@ albs = {
 ################################################################################
 
 aws_region   = "ap-southeast-1"
-project_name = "project-exam"
+project_name = "project-aws-infra"
 environment  = "dev"
 
 # --- Networking ---

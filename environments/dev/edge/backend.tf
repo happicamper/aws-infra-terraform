@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket         = "crescendo-tf-state-dev"
+    bucket         = "homelab-s3-tf-statefiles-ap-southeast-1"
     key            = "edge/terraform.tfstate"
     use_lockfile   = true
     dynamodb_table = "dynamodb-statelock-dev"
